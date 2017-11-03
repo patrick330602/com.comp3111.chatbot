@@ -73,7 +73,15 @@ public class SQLDatabaseEngine {
 	
 	public void storeAction(String id, String text, Action act) throws Exception{
 		Connection connection = this.getConnection();
-		PreparedStatement stmt = connection.prepareStatement("INSERT INTO mainflow VALUES('"+ id + "'," + "'"+text +"', "+ "'"+act.name() +"' );" );
+		//check if the userid aready exit, if yes, update it, else inset a new entry
+		PreparedStatement stmt = connection.prepareStatement("SELECT count(*) FROM mainflow WHERE userid=" + "id;");
+		ResultSet rs = stmt.executeQuery();
+		rs.next();
+		if(rs.getInt(1)==0)
+			stmt = connection.prepareStatement("INSERT INTO mainflow VALUES('"+ id + "'," + "'"+text +"', "+ "'"+act.name() +"' );" );
+		else
+			stmt = connection.prepareStatement("UPDATE mainflow SET userinput=" + "'"+text +"',"+ "action=" + "'"+act.name() +"'" + " where userid="+id+";" );
+
 		ResultSet rs = stmt.executeQuery();
 		
 		try {		
