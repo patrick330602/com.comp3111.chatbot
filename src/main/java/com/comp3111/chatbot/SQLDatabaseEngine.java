@@ -31,13 +31,26 @@ public class SQLDatabaseEngine {
 		}catch(SQLException e2) {
 			log.info("SQLException: ", e2.toString());
 		} finally {
-			try {
-				rs.close();
-				stmt.close();
-				connection.close();
+			if (rs != null){
+				try{
+					rs.close();
+				} catch (SQLException e) {
+					log.info("Exception when rs close: {}", e.toString());
+				}
 			}
-			catch (Exception e) {
-				log.info("Exception while disconnection: {}", e.toString());
+			if (stmt != null){
+				try {
+					stmt.close();
+				} catch (SQLException e){
+					log.info("Exception when stmt close: {}", e.toString());
+				}
+			}
+			if (connection != null){
+				try {
+					connection.close();
+				} catch (SQLException e){
+					log.info("Exception when connection close: {}", e.toString());
+				}
 			}
 		}
 
@@ -69,13 +82,26 @@ public class SQLDatabaseEngine {
 		} catch(SQLException e2) {
 			log.info("SQLException: ", e2.toString());
 		} finally {
-			try {
-				rs.close();
-				stmt.close();
-				connection.close();
+			if (rs != null){
+				try{
+					rs.close();
+				} catch (SQLException e) {
+					log.info("Exception when rs close: {}", e.toString());
+				}
 			}
-			catch (Exception e) {
-				log.info("Exception while disconnection: {}", e.toString());
+			if (stmt != null){
+				try {
+					stmt.close();
+				} catch (SQLException e){
+					log.info("Exception when stmt close: {}", e.toString());
+				}
+			}
+			if (connection != null){
+				try {
+					connection.close();
+				} catch (SQLException e){
+					log.info("Exception when connection close: {}", e.toString());
+				}
 			}
 		}
 
@@ -99,12 +125,26 @@ public class SQLDatabaseEngine {
 		} catch (Exception e) {
 			log.info("Exception while storing: {}", e.toString());
 		} finally {
-			try {		
-				rs.close();
-				stmt.close();
-				connection.close();	
-			} catch (Exception e) {
-				log.info("Exception while storing: {}", e.toString());
+			if (rs != null){
+				try{
+					rs.close();
+				} catch (SQLException e) {
+					log.info("Exception when storing rs close: {}", e.toString());
+				}
+			}
+			if (stmt != null){
+				try {
+					stmt.close();
+				} catch (SQLException e){
+					log.info("Exception when storing stmt close: {}", e.toString());
+				}
+			}
+			if (connection != null){
+				try {
+					connection.close();
+				} catch (SQLException e){
+					log.info("Exception when storing connection close: {}", e.toString());
+				}
 			}
 		}
 	}		
@@ -143,13 +183,26 @@ public class SQLDatabaseEngine {
 			log.info("Exception while connection: {}", e.toString());
 		}
 		finally {
-			try {
-				rs.close();
-				stmt.close();
-				connection.close();
+			if (rs != null){
+				try{
+					rs.close();
+				} catch (SQLException e) {
+					log.info("Exception when rs close: {}", e.toString());
+				}
 			}
-			catch (Exception e) {
-				log.info("Exception while disconnection: {}", e.toString());
+			if (stmt != null){
+				try {
+					stmt.close();
+				} catch (SQLException e){
+					log.info("Exception when stmt close: {}", e.toString());
+				}
+			}
+			if (connection != null){
+				try {
+					connection.close();
+				} catch (SQLException e){
+					log.info("Exception when connection close: {}", e.toString());
+				}
 			}
 		}				
 		
