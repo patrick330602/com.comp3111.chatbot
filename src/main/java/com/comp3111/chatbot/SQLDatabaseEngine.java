@@ -112,7 +112,6 @@ public class SQLDatabaseEngine {
 	}
 	
 	
-
 	public void storeAction(String id, String text, String action) throws Exception{
 		Connection connection = null;
 		PreparedStatement stmt = null;
@@ -120,15 +119,7 @@ public class SQLDatabaseEngine {
 		
 		try {		
 			connection = this.getConnection();
-			//check if the userid aready exit, if yes, update it, else inset a new entry
-			stmt = connection.prepareStatement("SELECT count(*) FROM mainflow WHERE userid=" + "id;");
-			rs = stmt.executeQuery();
-			rs.next();
-			if(rs.getInt(1)==0)
-				stmt = connection.prepareStatement("INSERT INTO mainflow VALUES('"+ id + "'," + "'"+text +"', "+ "'"+action.name() +"' );" );
-			else
-				stmt = connection.prepareStatement("UPDATE mainflow SET userinput=" + "'"+text +"',"+ "action=" + "'"+action.name() +"'" + " where userid="+id+";" );
-			
+			stmt = connection.prepareStatement("INSERT INTO mainflow VALUES('"+ id + "'," + "'"+text +"', "+ "'"+action +"' );" );
 			rs = stmt.executeQuery();
 			connection.close();
 		} catch (Exception e) {
