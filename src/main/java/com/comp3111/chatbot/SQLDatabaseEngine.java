@@ -13,25 +13,32 @@ import java.net.URI;
 @Slf4j
 public class SQLDatabaseEngine {
 	 String openingHourSearch(String text) throws Exception {
-		//Write your code here
 		String result = null;
+		Connection connection = null;
+		PreparedStatement stmt = null;
+		ResultSet rs = null;
+
 		try {
-			Connection connection = getConnection();
-			PreparedStatement stmt = connection.prepareStatement(
-					"SELECT * FROM facilities WHERE index=?");
+			connection = getConnection();
+			stmt = connection.prepareStatement("SELECT * FROM facilities WHERE index=?");
 			int n = Integer.parseInt(text);
 			stmt.setInt(1, n);
-			ResultSet rs = stmt.executeQuery();
+			rs = stmt.executeQuery();
 			rs.next();
-			result = "The opening hour of " + rs.getString(2) + "is:" + rs.getString(4);
-			
-			rs.close();
-			stmt.close();
-			connection.close();
+			result = "The opening hour of " + rs.getString(2) + " is:\n" + rs.getString(4);
 		}catch(URISyntaxException e1){
 			log.info("URISyntaxException: ", e1.toString());
 		}catch(SQLException e2) {
 			log.info("SQLException: ", e2.toString());
+		} finally {
+			try {
+				rs.close();
+				stmt.close();
+				connection.close();
+			}
+			catch (Exception e) {
+				log.info("Exception while disconnection: {}", e.toString());
+			}
 		}
 
 		if(result!=null)
@@ -40,28 +47,36 @@ public class SQLDatabaseEngine {
 	}
 	 
 	 String showFacilitiesChoices() throws Exception {
-		//Write your code here
 		String result = null;
+		Connection connection = null;
+		PreparedStatement stmt = null;
+		ResultSet rs = null;
+
 		try {
-			Connection connection = getConnection();
-			PreparedStatement stmt = connection.prepareStatement(
-					"SELECT * FROM facilities");
-			ResultSet rs = stmt.executeQuery();
+			connection = getConnection();
+			stmt = connection.prepareStatement("SELECT * FROM facilities");
+			rs = stmt.executeQuery();
+
 			while(rs.next())
 			{
 				if(result == null)
 					result = rs.getInt(1) + ". " + rs.getString(2) + "\n";
 				else
 					result += rs.getInt(1) + ". " + rs.getString(2) + "\n";
-			}
-			
-			rs.close();
-			stmt.close();
-			connection.close();
-		}catch(URISyntaxException e1){
+				}
+		} catch(URISyntaxException e1) {
 			log.info("URISyntaxException: ", e1.toString());
-		}catch(SQLException e2) {
+		} catch(SQLException e2) {
 			log.info("SQLException: ", e2.toString());
+		} finally {
+			try {
+				rs.close();
+				stmt.close();
+				connection.close();
+			}
+			catch (Exception e) {
+				log.info("Exception while disconnection: {}", e.toString());
+			}
 		}
 
 		if(result!=null)
@@ -71,63 +86,67 @@ public class SQLDatabaseEngine {
 	}
 	
 	
-	public void storeAction(String id, String text, Action act) throws Exception{
-		Connection connection = this.getConnection();
-		//check if the userid aready exit, if yes, update it, else inset a new entry
-		PreparedStatement stmt = connection.prepareStatement("SELECT count(*) FROM mainflow WHERE userid=" + "id;");
-		ResultSet rs = stmt.executeQuery();
-		rs.next();
-		if(rs.getInt(1)==0)
-			stmt = connection.prepareStatement("INSERT INTO mainflow VALUES('"+ id + "'," + "'"+text +"', "+ "'"+act.name() +"' );" );
-		else
-			stmt = connection.prepareStatement("UPDATE mainflow SET userinput=" + "'"+text +"',"+ "action=" + "'"+act.name() +"'" + " where userid="+id+";" );
 
-		ResultSet rs = stmt.executeQuery();
+	public void storeAction(String id, String text, String action) throws Exception{
+		Connection connection = null;
+		PreparedStatement stmt = null;
+		ResultSet rs = null;
 		
 		try {		
-
+			connection = this.getConnection();
+			//check if the userid aready exit, if yes, update it, else inset a new entry
+			stmt = connection.prepareStatement("SELECT count(*) FROM mainflow WHERE userid=" + "id;");
+			rs = stmt.executeQuery();
+			rs.next();
+			if(rs.getInt(1)==0)
+				stmt = connection.prepareStatement("INSERT INTO mainflow VALUES('"+ id + "'," + "'"+text +"', "+ "'"+action.name() +"' );" );
+			else
+				stmt = connection.prepareStatement("UPDATE mainflow SET userinput=" + "'"+text +"',"+ "action=" + "'"+action.name() +"'" + " where userid="+id+";" );
 			
-			}
-			catch (Exception e) {
-				log.info("Exception while storing: {}", e.toString());
-			}
-		
-		finally {
-		try {		
-			rs.close();
-			stmt.close();
+			rs = stmt.executeQuery();
 			connection.close();
-			
-			}
-			catch (Exception e) {
+		} catch (Exception e) {
+			log.info("Exception while storing: {}", e.toString());
+		} finally {
+			try {		
+				rs.close();
+				stmt.close();
+				connection.close();	
+			} catch (Exception e) {
 				log.info("Exception while storing: {}", e.toString());
 			}
 		}
-		}		
+	}		
 
 	
 	
 	public String[] nextAction(String id) throws Exception{
 		String[] next= new String [2];
-		
-		Connection connection = this.getConnection();
-		PreparedStatement stmt = connection.prepareStatement("SELECT * FROM mainflow");
-		ResultSet rs = stmt.executeQuery();
-		
-		try {
-			
-			String sCurrentLine;
-			while (rs.next()) {
+		Connection connection = null;
+		PreparedStatement stmt = null;
+		ResultSet rs = null;
 
-				sCurrentLine = rs.getString(1) + ":" + rs.getString(2) +":"+ rs.getString(3) ;
-				String[] parts = sCurrentLine.split(":");
-				
-				if (id.equals(parts[0])) {
-					next[0] = parts[1];
-					next[1] = Action.valueOf(parts[2]).name();
-				}
-				
+		try {
+			connection = this.getConnection();
+			log.info("userid: {}", id);
+			stmt = connection.prepareStatement("SELECT * FROM mainflow where userid = '" + id + "'");
+			
+			rs = stmt.executeQuery();
+			String sCurrentLine;
+
+			// Stupid way to loop til latest match record
+			if(rs.next()) {
+				do {
+					sCurrentLine = rs.getString(1) + ":" + rs.getString(2) +":"+ rs.getString(3) ;
+					String[] parts = sCurrentLine.split(":");
+					
+					if (id.equals(parts[0])) {
+						next[0] = parts[1];
+						next[1] = parts[2];
+					}
+				} while (rs.next());
 			}
+			
 		}
 		catch (Exception e) {
 			log.info("Exception while connection: {}", e.toString());
