@@ -86,18 +86,11 @@ public class SQLDatabaseEngine {
 	}
 	
 	
-<<<<<<< HEAD
 
 	public void storeAction(String id, String text, String action) throws Exception{
 		Connection connection = null;
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
-=======
-	public void storeAction(String id, String text, Action act) throws Exception{
-		Connection connection = this.getConnection();
-		PreparedStatement stmt = connection.prepareStatement("INSERT INTO mainflow VALUES('"+ id + "'," + "'"+text +"', "+ "'"+act.name() +"' );" );
-		ResultSet rs = stmt.executeQuery();
->>>>>>> parent of 99a42a6... add check case for userid in storeAction()
 		
 		try {		
 			connection = this.getConnection();
