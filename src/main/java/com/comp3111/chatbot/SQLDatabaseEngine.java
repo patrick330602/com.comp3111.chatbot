@@ -1,6 +1,5 @@
 package com.comp3111.chatbot;
 
-import com.sun.java.util.jar.pack.Package;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
@@ -10,6 +9,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -155,7 +157,7 @@ public class SQLDatabaseEngine {
 
 		try {
 			connection = getConnection();
-			stmt = connection.prepareStatement("SELECT * FROM party WHERE userId ='" + id + "'");
+			stmt = connection.prepareStatement("SELECT * FROM thanksgiving WHERE userId ='" + id + "'");
 			rs = stmt.executeQuery();
 			String refresh = rs.getString("accepted");
 			if (refresh.equals("no")){
@@ -189,7 +191,7 @@ public class SQLDatabaseEngine {
 
 		try {
 			connection = getConnection();
-			stmt = connection.prepareStatement("SELECT refresh FROM party WHERE refresh ='" + text + "'");
+			stmt = connection.prepareStatement("SELECT food FROM thanksgiving WHERE food ='" + text + "'");
 			rs = stmt.executeQuery();
 			String result = rs.getString("refresh");
 			if (result.equals(text)){
@@ -213,18 +215,37 @@ public class SQLDatabaseEngine {
 		return foodAlreadyBrought;
 	}
 
-	public void storeIDRecord(String id, String refresh, String accepted) throws Exception{
+	public void storeIDRecord(String id, String food, String accepted) throws Exception{
 		Connection connection = null;
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
 
 		try {
 			connection = this.getConnection();
-			stmt = connection.prepareStatement("SELECT COUNT (userId) FROM  party WHERE userId='" + id + "'");
+			// count with ID to see if record exist
+			stmt = connection.prepareStatement("SELECT COUNT (userId) FROM  thanksgiving WHERE userId='" + id + "'");
 			rs = stmt.executeQuery();
 			if (rs.getInt(1) != 1){
-				stmt = connection.prepareStatement("INSERT INTO party VALUES('"+ id + "'," + "'"+ refresh +"', "+ "'"+ accepted +"' )" );
+				// record not exist for new added users
+				stmt = connection.prepareStatement("INSERT INTO thanksgiving VALUES('"+ id + "'," + "'"+ food +"', '"+ accepted +"',0)" );
+				stmt.executeUpdate();
+				log.info("Insert new user into table");
+			}
+			else if (accepted.equals("yes")){
+				// join party update with food
+				stmt = connection.prepareStatement("UPDATE thanksgiving SET food='" + food + "', accepted='yes', lastDate=0 WHERE userId='" + id + "'" );
 				rs = stmt.executeQuery();
+				log.info("Insert food into table after accept");
+			}
+			else {
+				// latest push date
+				ZonedDateTime currentTime = ZonedDateTime.now(ZoneId.of("UTC+8"));
+				String latestDate = currentTime.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+				int latestDateInt = Integer.parseInt(latestDate);
+				stmt = connection.prepareStatement("UPDATE thanksgiving SET food='nothing', accepted='no', lastDate=? WHERE userId='" + id + "'" );
+				stmt.setInt(1, latestDateInt);
+				stmt.executeUpdate();
+				log.info("Refresh push date");
 			}
 			connection.close();
 		} catch (Exception e) {
@@ -238,6 +259,46 @@ public class SQLDatabaseEngine {
 				log.info("Exception while storing: {}", e.toString());
 			}
 		}
+	}
+
+	public List<String> refreshAllRecordInThanksgiving() throws Exception{
+		Connection connection = null;
+		PreparedStatement stmt = null;
+		ResultSet rs = null;
+		try {
+			connection = this.getConnection();
+			ZonedDateTime currentTime = ZonedDateTime.now(ZoneId.of("UTC+8"));
+			String latestDate = currentTime.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+			int latestDateInt = Integer.parseInt(latestDate);
+			stmt = connection.prepareStatement("SELECT * FROM thanksgiving WHERE accepted='no' AND lastDate<?");
+			stmt.setInt(1, latestDateInt);
+			rs = stmt.executeQuery();
+			List<String> userIDs = new ArrayList<>();
+			// loop to insert id to list
+			if(rs.next()) {
+				do {
+					userIDs.add(rs.getString("userId"));
+					log.info("added userID to list: {}", rs.getString("userId"));
+				} while (rs.next());
+			}
+			connection.close();
+			for (String userId : userIDs){
+				// for each id refresh record
+				storeIDRecord(userId, "nothing", "no");
+			}
+			return userIDs;
+		} catch (Exception e) {
+			log.info("Exception while storing: {}", e.toString());
+		} finally {
+			try {
+				try { rs.close(); } catch (Exception e) {}
+				try { stmt.close(); }  catch (Exception e) {}
+				try { connection.close(); } catch (Exception e) {}
+			} catch (Exception e) {
+				log.info("Exception while storing: {}", e.toString());
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -322,39 +383,6 @@ public class SQLDatabaseEngine {
 		
 		return next;
 	}
-
-//	public void refreshAllRecord() throws Exception{
-//		Connection connection = null;
-//		PreparedStatement stmt = null;
-//		ResultSet rs = null;
-//		try {
-//			connection = this.getConnection();
-//			stmt = connection.prepareStatement("SELECT * FROM party WHERE accepted='no'");
-//			rs = stmt.executeQuery();
-//			List<String> userIDs = new ArrayList<>();
-//			if(rs.next()) {
-//				do {
-//					userIDs.add(rs.getString("userId"));
-//					log.info("added userID to list: {}", rs.getString("userId"));
-//				} while (rs.next());
-//			}
-//			for (String userId : userIDs){
-//
-//				stmt = connection.prepareStatement("UPDATE party SET refresh='' WHERE userId='" + userId + "'" );
-//				rs = stmt.executeQuery();
-//			}
-//		} catch (Exception e) {
-//			log.info("Exception while storing: {}", e.toString());
-//		} finally {
-//			try {
-//				try { rs.close(); } catch (Exception e) {}
-//				try { stmt.close(); }  catch (Exception e) {}
-//				try { connection.close(); } catch (Exception e) {}
-//			} catch (Exception e) {
-//				log.info("Exception while storing: {}", e.toString());
-//			}
-//		}
-//	}
 	
 	private Connection getConnection() throws URISyntaxException, SQLException {
 		Connection connection;

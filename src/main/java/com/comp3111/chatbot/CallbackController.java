@@ -17,6 +17,7 @@ import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
+import com.linecorp.bot.model.PushMessage;
 import com.linecorp.bot.model.action.*;
 import com.linecorp.bot.model.message.template.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -136,7 +137,7 @@ public class CallbackController {
         this.replyText(replyToken, "Got followed event");
         SQLDatabaseEngine db = new SQLDatabaseEngine();
         String id = event.getSource().getUserId();
-        try {db.storeIDRecord(id, "000", "no")}catch (Exception e){log.info(e.toString());}
+        try {db.storeIDRecord(id, "nothing", "no");}catch (Exception e){log.info(e.toString());}
     }
 
     @EventMapping
@@ -145,7 +146,7 @@ public class CallbackController {
         this.replyText(replyToken, "Joined " + event.getSource());
         SQLDatabaseEngine db = new SQLDatabaseEngine();
         String id = event.getSource().getUserId();
-        try {db.storeIDRecord(id, "000", "no")}catch (Exception e){log.info(e.toString());}
+        try {db.storeIDRecord(id, "nothing", "no");}catch (Exception e){log.info(e.toString());}
     }
 
     @EventMapping
@@ -208,6 +209,12 @@ public class CallbackController {
     private Boolean handleNextAction(String userId, String replyToken, String text, SQLDatabaseEngine db)
             throws Exception {
         // SQLDatabaseEngine db = new SQLDatabaseEngine();        
+
+        for (String userIDFromDB:db.refreshAllRecordInThanksgiving()) {
+            String trialMessage = "test push message";
+            BotApiResponse apiResponse = lineMessagingClient.pushMessage(new PushMessage(userIDFromDB, new TextMessage(trialMessage))).get();
+            log.info("Push messages: {}", apiResponse);
+        }
         String[] curr = db.nextAction(userId);
         String action = curr[1];
         String param = curr[0];
