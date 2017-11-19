@@ -1,5 +1,6 @@
 package com.comp3111.chatbot;
 
+import com.sun.java.util.jar.pack.Package;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
@@ -9,6 +10,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 public class SQLDatabaseEngine {
@@ -152,7 +155,7 @@ public class SQLDatabaseEngine {
 
 		try {
 			connection = getConnection();
-			stmt = connection.prepareStatement("SELECT * FROM party WHERE userid ='" + id + "'");
+			stmt = connection.prepareStatement("SELECT * FROM party WHERE userId ='" + id + "'");
 			rs = stmt.executeQuery();
 			String refresh = rs.getString("accepted");
 			if (refresh.equals("no")){
@@ -210,6 +213,32 @@ public class SQLDatabaseEngine {
 		return foodAlreadyBrought;
 	}
 
+	public void storeIDRecord(String id, String refresh, String accepted) throws Exception{
+		Connection connection = null;
+		PreparedStatement stmt = null;
+		ResultSet rs = null;
+
+		try {
+			connection = this.getConnection();
+			stmt = connection.prepareStatement("SELECT COUNT (userId) FROM  party WHERE userId='" + id + "'");
+			rs = stmt.executeQuery();
+			if (rs.getInt(1) != 1){
+				stmt = connection.prepareStatement("INSERT INTO party VALUES('"+ id + "'," + "'"+ refresh +"', "+ "'"+ accepted +"' )" );
+				rs = stmt.executeQuery();
+			}
+			connection.close();
+		} catch (Exception e) {
+			log.info("Exception while storing: {}", e.toString());
+		} finally {
+			try {
+				try { rs.close(); } catch (Exception e) {}
+				try { stmt.close(); }  catch (Exception e) {}
+				try { connection.close(); } catch (Exception e) {}
+			} catch (Exception e) {
+				log.info("Exception while storing: {}", e.toString());
+			}
+		}
+	}
 
 	/**
 	 * Stores the current action and message input by the user in the database.
@@ -249,7 +278,6 @@ public class SQLDatabaseEngine {
 	 * @return A String array which contains the latest action and message input by the user.
 	 * @throws Exception
 	 */
-	
 	public String[] nextAction(String id) throws Exception{
 		String[] next= new String [2];
 		Connection connection = null;
@@ -294,7 +322,39 @@ public class SQLDatabaseEngine {
 		
 		return next;
 	}
-	
+
+//	public void refreshAllRecord() throws Exception{
+//		Connection connection = null;
+//		PreparedStatement stmt = null;
+//		ResultSet rs = null;
+//		try {
+//			connection = this.getConnection();
+//			stmt = connection.prepareStatement("SELECT * FROM party WHERE accepted='no'");
+//			rs = stmt.executeQuery();
+//			List<String> userIDs = new ArrayList<>();
+//			if(rs.next()) {
+//				do {
+//					userIDs.add(rs.getString("userId"));
+//					log.info("added userID to list: {}", rs.getString("userId"));
+//				} while (rs.next());
+//			}
+//			for (String userId : userIDs){
+//
+//				stmt = connection.prepareStatement("UPDATE party SET refresh='' WHERE userId='" + userId + "'" );
+//				rs = stmt.executeQuery();
+//			}
+//		} catch (Exception e) {
+//			log.info("Exception while storing: {}", e.toString());
+//		} finally {
+//			try {
+//				try { rs.close(); } catch (Exception e) {}
+//				try { stmt.close(); }  catch (Exception e) {}
+//				try { connection.close(); } catch (Exception e) {}
+//			} catch (Exception e) {
+//				log.info("Exception while storing: {}", e.toString());
+//			}
+//		}
+//	}
 	
 	private Connection getConnection() throws URISyntaxException, SQLException {
 		Connection connection;

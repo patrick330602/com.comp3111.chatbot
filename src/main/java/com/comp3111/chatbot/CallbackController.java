@@ -134,12 +134,18 @@ public class CallbackController {
     public void handleFollowEvent(FollowEvent event) {
         String replyToken = event.getReplyToken();
         this.replyText(replyToken, "Got followed event");
+        SQLDatabaseEngine db = new SQLDatabaseEngine();
+        String id = event.getSource().getUserId();
+        try {db.storeIDRecord(id, "000", "no")}catch (Exception e){log.info(e.toString());}
     }
 
     @EventMapping
     public void handleJoinEvent(JoinEvent event) {
         String replyToken = event.getReplyToken();
         this.replyText(replyToken, "Joined " + event.getSource());
+        SQLDatabaseEngine db = new SQLDatabaseEngine();
+        String id = event.getSource().getUserId();
+        try {db.storeIDRecord(id, "000", "no")}catch (Exception e){log.info(e.toString());}
     }
 
     @EventMapping
@@ -543,6 +549,7 @@ public class CallbackController {
                                 return true;
                             }
                             else {
+                                db.storeIDRecord(userId, param, "yes");
                                 reply = "Great, please prepare 5 people portion of that";
                                 this.replyText(replyToken, reply);
                                 db.storeAction(userId, text, ACTION.EXIT_MAIN);
@@ -579,6 +586,8 @@ public class CallbackController {
     }
 
     private void handleTextContent(String replyToken, Event event, TextMessageContent content) throws Exception {
+
+
 
         String text = content.getText();
 
