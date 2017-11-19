@@ -85,7 +85,72 @@ public class SQLDatabaseEngine {
 			return "NOT FOUND";
 	}
 	
-	
+	Boolean isRegistered(String id) throws Exception {
+		Boolean userReg = false;
+		Connection connection = null;
+		PreparedStatement stmt = null;
+		ResultSet rs = null;
+
+		try {
+			connection = getConnection();
+			stmt = connection.prepareStatement("SELECT * FROM party WHERE userid ='" + id + "'");
+			rs = stmt.executeQuery();
+			String refresh = rs.getString("accepted");
+			if (refresh.equals("no")){
+				userReg = false;
+			}
+			else {
+				userReg = true;
+			}
+		}catch(URISyntaxException e1){
+			log.info("URISyntaxException: ", e1.toString());
+		}catch(SQLException e2) {
+			log.info("SQLException: ", e2.toString());
+		} finally {
+			try {
+				try { rs.close(); } catch (Exception e) {}
+				try { stmt.close(); }  catch (Exception e) {}
+				try { connection.close(); } catch (Exception e) {}
+			}
+			catch (Exception e) {
+				log.info("Exception while disconnection: {}", e.toString());
+			}
+		}
+		return userReg;
+	}
+
+	Boolean foodExist(String text) throws Exception {
+		Boolean foodAlreadyBrought = false;
+		Connection connection = null;
+		PreparedStatement stmt = null;
+		ResultSet rs = null;
+
+		try {
+			connection = getConnection();
+			stmt = connection.prepareStatement("SELECT refresh FROM party WHERE refresh ='" + text + "'");
+			rs = stmt.executeQuery();
+			String result = rs.getString("refresh");
+			if (result.equals(text)){
+				foodAlreadyBrought = true;
+			}
+
+		}catch(URISyntaxException e1){
+			log.info("URISyntaxException: ", e1.toString());
+		}catch(SQLException e2) {
+			log.info("SQLException: ", e2.toString());
+		} finally {
+			try {
+				try { rs.close(); } catch (Exception e) {}
+				try { stmt.close(); }  catch (Exception e) {}
+				try { connection.close(); } catch (Exception e) {}
+			}
+			catch (Exception e) {
+				log.info("Exception while disconnection: {}", e.toString());
+			}
+		}
+		return foodAlreadyBrought;
+	}
+
 	public void storeAction(String id, String text, String action) throws Exception{
 		Connection connection = null;
 		PreparedStatement stmt = null;
